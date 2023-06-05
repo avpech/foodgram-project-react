@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Exists, OuterRef
 
+from recipes.validators import ColorHexCodeValidator
+
 User = get_user_model()
 
 
@@ -16,6 +18,7 @@ class Tag(models.Model):
     )
     color = models.CharField(
         max_length=7,
+        validators=(ColorHexCodeValidator(),),
         verbose_name='Цветовой HEX-код',
         help_text='Обязательное поле. Пример: #49B64E'
     )

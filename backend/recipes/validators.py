@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from rest_framework.exceptions import ValidationError
 
 
@@ -16,3 +17,9 @@ class RecipeUniqueValidator:
                  .format(serializer.Meta.model._meta.verbose_name))
             )
         return attrs
+
+
+class ColorHexCodeValidator(RegexValidator):
+    """Валидация на корректный цветовой HEX-код."""
+    regex = r'^#([0-9a-fA-F]{2}){3}$'
+    message = 'Введите корректный цветовой HEX-код. Пример: #49B64E'

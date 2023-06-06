@@ -68,16 +68,31 @@ class RecipeSerializer(serializers.ModelSerializer):
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
 
+    class ErrorMessage:
+        EMPTY_INGREDIENTS_ERROR = (
+            {'ingredients': 'Необходимо указать хотя бы один ингредиент'}
+        )
+        INGREDIENTS_REOCCURRENCE_ERROR = (
+            {'ingredients': ('Одинаковые ингредиенты с одинаковой '
+                             'единицей измерения не должны повторяться')}
+        )
+
+    def logger_warning(self, field):
+        """Предупреждение об отсутствии ожидаемого аннотированного поля."""
+        request = self.context['request']
+        return (
+            f'{request.path}: Запрос к базе данных не оптимален. '
+            f'В {self.__class__.__name__} в переданном queryset '
+            f'не аннотировано поле {field}'
+        )
+
     def get_is_favorited(self, obj):
         request = self.context['request']
         if not request.user.is_authenticated:
             return False
-        if not hasattr(obj, 'is_favorited'):
-            logging.warning(
-                f'{request.path}: Запрос к базе данных не оптимален. '
-                f'В {self.__class__.__name__} в переданном queryset '
-                'не аннотировано поле is_favorited'
-            )
+        field = 'is_favorited'
+        if not hasattr(obj, field):
+            logging.warning(self.logger_warning(field))
             return obj.followers.filter(user=request.user).exists()
         return obj.is_favorited
 
@@ -85,28 +100,35 @@ class RecipeSerializer(serializers.ModelSerializer):
         request = self.context['request']
         if not request.user.is_authenticated:
             return False
-        if not hasattr(obj, 'is_in_shopping_cart'):
-            logging.warning(
-                f'{request.path}: Запрос к базе данных не оптимален. '
-                f'В {self.__class__.__name__} в переданном queryset '
-                'не аннотировано поле is_in_shopping_cart'
-            )
+        field = 'is_in_shopping_cart'
+        if not hasattr(obj, field):
+            logging.warning(self.logger_warning(field))
             return obj.carts.filter(user=request.user).exists()
         return obj.is_in_shopping_cart
 
+    # Примечание. По поводу валидаций на минимальное значение для amount
+    # и cooking_time. Даже когда я их добавляю, сериализатор в первую очередь
+    # по умолчанию использует валидаторы на минимальное значение, указанные
+    # в модели. И не пройдя их, он даже не пытается провести валидацию в
+    # методах validate или validate_cooking_time.
+    #
+    # def validate_cooking_time(self, value):
+    #     print('Этот валидатор очень ленивый и совсем не хочет работать')
+    #     if value < settings.MIN_COOKING_TIME:
+    #         raise serializers.ValidationError('')
+    #
     def validate(self, attrs):
         ingredients = attrs.get('recipe_ingredients', False)
         if not ingredients:
             raise serializers.ValidationError(
-                {'ingredients': 'Необходимо указать хотя бы один ингредиент'}
+                self.ErrorMessage.EMPTY_INGREDIENTS_ERROR
             )
         ingredient_list = []
         for ingredient in ingredients:
             ingredient_list.append(ingredient.get('ingredient').get('id'))
         if len(ingredient_list) > len(set(ingredient_list)):
             raise serializers.ValidationError(
-                {'ingredients': ('Одинаковые ингредиенты с одинаковой '
-                                 'единицей измерения не должны повторяться')}
+                self.ErrorMessage.INGREDIENTS_REOCCURRENCE_ERROR
             )
         return attrs
 
@@ -119,7 +141,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             ) for ingredient in ingredients
         ])
 
-    @transaction.atomic()
+    @transaction.atomic
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipe_ingredients')
@@ -131,6 +153,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe.is_in_shopping_cart = False
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', False)
         ingredients = validated_data.pop('recipe_ingredients', False)

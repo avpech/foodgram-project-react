@@ -25,15 +25,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        constraints = (
-            models.CheckConstraint(
-                check=~(
-                    models.Q(username='me')
-                    | models.Q(username='subscriptions')
-                ),
-                name='forbidden_usernames'
-            ),
-        )
         ordering = ('-date_joined',)
 
 

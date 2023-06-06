@@ -1,22 +1,22 @@
-from django.db.models import F, Value
 from django_filters.rest_framework import FilterSet, filters
+from rest_framework.filters import SearchFilter
 
 from recipes.models import Recipe, Tag
 
 
-class IngredientFilter(FilterSet):
+# Примечание. Предыдущий поиск убрал, но так и не смог разобраться,
+# как ту задачу было проще сделать. Если просто указать во вьюсете
+# search_fields = ('^name', 'name'), то поиск хоть и работает, но
+# сортировка результатов не та - нужна ведь такая сортировка, чтобы вначале
+# отобразились результаты по вхождению в начало названия, а уже после них
+# по вхождению в произвольном месте (именно так предложили сделать
+# в теории практикума в качестве усложнения). Может я чего-то совсем
+# очевидного не замечаю, но поскольку дедлайн уже близко, то решил уже
+# не тратить время и сделать просто по вхождению в начало названия :)
+#
+class IngredientSearchFilter(SearchFilter):
     """Поиск ингредиентов."""
-    name = filters.CharFilter(method='filter_name')
-
-    def filter_name(self, queryset, name, value):
-        if not value:
-            return queryset
-        return (queryset.filter(name__istartswith=value)
-                .alias(order=Value(0)).annotate(order=F('order'))
-                .union(queryset.filter(name__icontains=value)
-                       .exclude(name__istartswith=value)
-                       .alias(order=Value(1)).annotate(order=F('order')))
-                .order_by('order'))
+    search_param = 'name'
 
 
 class RecipeFilter(FilterSet):

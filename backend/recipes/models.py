@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -11,7 +12,7 @@ User = get_user_model()
 class Tag(models.Model):
     """Модель тегов."""
     name = models.CharField(
-        max_length=32,
+        max_length=50,
         verbose_name='Название тега',
         unique=True,
         help_text='Обязательное поле'
@@ -23,7 +24,7 @@ class Tag(models.Model):
         help_text='Обязательное поле. Пример: #49B64E'
     )
     slug = models.SlugField(
-        max_length=16,
+        max_length=50,
         verbose_name='Слаг тега',
         unique=True,
         db_index=True,
@@ -35,7 +36,7 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self) -> str:
-        return f'{self.name}'
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -49,7 +50,6 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(
         max_length=32,
         verbose_name='Единица измерения',
-        db_index=True,
         help_text='Обязательное поле'
     )
 
@@ -66,7 +66,7 @@ class Ingredient(models.Model):
         ordering = ('name',)
 
     def __str__(self) -> str:
-        return f'{self.name}'
+        return self.name
 
 
 class RecipeQuerySet(models.QuerySet):
@@ -127,12 +127,12 @@ class Recipe(models.Model):
         help_text='Обязательное поле'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        validators=(MinValueValidator(1),),
+        validators=(MinValueValidator(settings.MIN_COOKING_TIME),),
         verbose_name='Время приготовления',
         help_text='Обязательное поле'
     )
     pub_date = models.DateTimeField(
-        'Дата публикации',
+        verbose_name='Дата публикации',
         auto_now_add=True,
         db_index=True
     )
@@ -144,7 +144,7 @@ class Recipe(models.Model):
         ordering = ('-pub_date',)
 
     def __str__(self) -> str:
-        return f'{self.name}'
+        return self.name
 
 
 class RecipeIngredient(models.Model):
@@ -153,6 +153,11 @@ class RecipeIngredient(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         related_name='recipe_ingredients',
+        # прим. Не стал (не смог) менять на ingredients, поскольку в модели
+        # Recipe явно указано many-to-many поле ingredients, и конфликт
+        # имен вызывает у Джанго глубокое возмущение )
+        # А отказываться от явного указания поля не хочется, потому что
+        # благодаря ему можно использовать метод clear()
         verbose_name='Рецепт',
         db_index=True,
         help_text='Обязательное поле'
@@ -160,14 +165,17 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.PROTECT,
-        related_name='recipe_ingredients',
+        related_name='recipes_with_ingredient',
+        # тут аналогично - в вышеупомянутом поле ingredients
+        # уже указано related_name recipes.
         verbose_name='Ингредиент',
         db_index=True,
         help_text='Обязательное поле'
     )
     amount = models.PositiveSmallIntegerField(
-        validators=(MinValueValidator(1),),
+        validators=(MinValueValidator(settings.MIN_INGREDIENT_AMOUNT),),
         verbose_name='Количество',
+        help_text='Обязательное поле'
     )
 
     class Meta:

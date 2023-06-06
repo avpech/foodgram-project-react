@@ -45,11 +45,6 @@ class CustomUserCreateSerializer(UserCreateSerializer):
             'first_name', 'last_name', 'password'
         )
 
-    def validate_username(self, value):
-        if value == 'me' or value == 'subscriptions':
-            raise serializers.ValidationError('Недопустимое имя пользователя')
-        return value
-
 
 class BrieflyRecipeSerializer(serializers.ModelSerializer):
     """Краткое отображение рецепта."""
@@ -81,6 +76,19 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'is_subscribed', 'recipes', 'recipes_count'
         )
 
+    class ErrorMessage:
+        SUBSCRIPTION_EXISTS_ERROR = 'Подписка уже существует.'
+        SELF_FOLLOWING_ERROR = 'Пользователь не может подписаться на себя.'
+
+    def logger_warning(self, field):
+        """Предупреждение об отсутствии ожидаемого аннотированного поля."""
+        request = self.context['request']
+        return (
+            f'{request.path}: Запрос к базе данных не оптимален. '
+            f'В {self.__class__.__name__} в переданном queryset '
+            f'не аннотировано поле {field}'
+        )
+
     def get_recipes(self, obj):
         request = self.context['request']
         try:
@@ -96,23 +104,16 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context['request']
-        if not hasattr(obj, 'is_subscribed'):
-            logging.warning(
-                f'{request.path}: Запрос к базе данных не оптимален. '
-                f'В {self.__class__.__name__} в переданном queryset '
-                'не аннотировано поле is_subscribed'
-            )
+        field = 'is_subscribed'
+        if not hasattr(obj, field):
+            logging.warning(self.logger_warning(field))
             return obj.user == request.user
         return obj.is_subscribed
 
     def get_recipes_count(self, obj):
-        if not hasattr(obj, 'recipes_count'):
-            request = self.context['request']
-            logging.warning(
-                f'{request.path}: Запрос к базе данных не оптимален. '
-                f'В {self.__class__.__name__} в переданном queryset '
-                'не аннотировано поле recipes_count'
-            )
+        field = 'recipes_count'
+        if not hasattr(obj, field):
+            logging.warning(self.logger_warning(field))
             return obj.author.recipes.count()
         return obj.recipes_count
 
@@ -120,10 +121,12 @@ class SubscribeSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         author_id = int(self.context['view'].kwargs.get('id'))
         if Subscribe.objects.filter(user=user, author=author_id).exists():
-            raise serializers.ValidationError('Подписка уже существует.')
+            raise serializers.ValidationError(
+                self.ErrorMessage.SUBSCRIPTION_EXISTS_ERROR
+            )
         if author_id == user.id:
             raise serializers.ValidationError(
-                'Пользователь не может подписаться на себя.'
+                self.ErrorMessage.SELF_FOLLOWING_ERROR
             )
         return attrs
 

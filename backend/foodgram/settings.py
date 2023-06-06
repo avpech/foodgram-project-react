@@ -1,12 +1,16 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-SECRET_KEY = 'django-insecure-h(m0qr#y3n(=8_(6c7ddr()8@=71=9_7qt2)u-lbh3j0h9=2s+'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -26,10 +30,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework.authtoken',
     'djoser',
-    'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
-    'api.apps.ApiConfig',
     'django_filters',
 ]
 
@@ -123,7 +125,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'core.pagination.PageNumberLimitPagination',
+    'DEFAULT_PAGINATION_CLASS': 'foodgram.pagination.PageNumberLimitPagination',
     'PAGE_SIZE': 6,
 }
 
@@ -154,3 +156,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MIN_COOKING_TIME = 1
+
+MIN_INGREDIENT_AMOUNT = 1

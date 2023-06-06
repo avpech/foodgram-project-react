@@ -10,7 +10,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from recipes.filters import IngredientFilter, RecipeFilter
+from recipes.filters import IngredientSearchFilter, RecipeFilter
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from recipes.permissions import IsOwnerOrReadOnly
 from recipes.serializers import (
@@ -37,14 +37,13 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для просмотра ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = IngredientFilter
+    filter_backends = (IngredientSearchFilter,)
+    search_fields = ('^name',)
     pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для эндпоинта рецептов."""
-    queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     http_method_names = ('get', 'head', 'options', 'post', 'patch', 'delete')
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
@@ -57,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if not self.request.user.is_authenticated:
             return (
-                super().get_queryset().select_related('author')
+                Recipe.objects.all().select_related('author')
                 .prefetch_related(
                     'tags',
                     Prefetch(
@@ -66,8 +65,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         ).select_related('ingredient')
                     ))
             )
+        # Примечание. По поводу замечания серым цветом насчет того, что
+        # запрос ниже сложный и его будет сложно дебажить.
+        # Я просто ума не приложу, как его упростить :)
+        # На данный момент запрос списка всех рецептов обходиться в пять
+        # обращений к бд (плюс обращение по части авторизации).
+        # И чтобы я из него ни убрал, количество обращений
+        # вырастает кратно при большом количестве запрашиваемых объектов.
         return (
-            super().get_queryset()
+            Recipe.objects
             .add_is_favorited(self.request.user)
             .add_is_in_shopping_cart(self.request.user)
             .prefetch_related(

@@ -32,7 +32,7 @@ class RecipesAdmin(admin.ModelAdmin):
         'author',
         'followers_count'
     )
-    search_fields = ('author', 'name')
+    search_fields = ('author__username', 'name')
     list_filter = ('author', 'name', 'tags')
     filter_horizontal = ('tags',)
     inlines = (RecipeIngredientInLine,)
@@ -60,7 +60,7 @@ class FavoriteAdmin(admin.ModelAdmin):
         'user',
         'recipe',
     )
-    search_fields = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
     list_filter = ('user', 'recipe')
 
 
@@ -71,5 +71,5 @@ class ShoppingCartAdmin(admin.ModelAdmin):
         'user',
         'recipe',
     )
-    search_fields = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
     list_filter = ('user', 'recipe')

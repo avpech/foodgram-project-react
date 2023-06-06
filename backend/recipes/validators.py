@@ -13,8 +13,8 @@ class RecipeUniqueValidator:
             user=user, recipe=recipe_id
         ).exists():
             raise ValidationError(
-                ('Рецепт уже добавлен в {}.'
-                 .format(serializer.Meta.model._meta.verbose_name))
+                (f'Рецепт уже добавлен в '
+                 f'{serializer.Meta.model._meta.verbose_name}.')
             )
         return attrs
 

@@ -153,11 +153,6 @@ class RecipeIngredient(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         related_name='recipe_ingredients',
-        # прим. Не стал (не смог) менять на ingredients, поскольку в модели
-        # Recipe явно указано many-to-many поле ingredients, и конфликт
-        # имен вызывает у Джанго глубокое возмущение )
-        # А отказываться от явного указания поля не хочется, потому что
-        # благодаря ему можно использовать метод clear()
         verbose_name='Рецепт',
         db_index=True,
         help_text='Обязательное поле'
@@ -166,8 +161,6 @@ class RecipeIngredient(models.Model):
         Ingredient,
         on_delete=models.PROTECT,
         related_name='recipes_with_ingredient',
-        # тут аналогично - в вышеупомянутом поле ingredients
-        # уже указано related_name recipes.
         verbose_name='Ингредиент',
         db_index=True,
         help_text='Обязательное поле'

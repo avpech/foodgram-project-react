@@ -17,6 +17,16 @@ from recipes.validators import RecipeUniqueValidator
 from users.serializers import CustomUserSerializer
 
 
+class ErrorMessage:
+    EMPTY_INGREDIENTS_ERROR = (
+        {'ingredients': 'Необходимо указать хотя бы один ингредиент'}
+    )
+    INGREDIENTS_REOCCURRENCE_ERROR = (
+        {'ingredients': ('Одинаковые ингредиенты с одинаковой '
+                         'единицей измерения не должны повторяться')}
+    )
+
+
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для тегов."""
 
@@ -68,15 +78,6 @@ class RecipeSerializer(serializers.ModelSerializer):
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
 
-    class ErrorMessage:
-        EMPTY_INGREDIENTS_ERROR = (
-            {'ingredients': 'Необходимо указать хотя бы один ингредиент'}
-        )
-        INGREDIENTS_REOCCURRENCE_ERROR = (
-            {'ingredients': ('Одинаковые ингредиенты с одинаковой '
-                             'единицей измерения не должны повторяться')}
-        )
-
     def logger_warning(self, field):
         """Предупреждение об отсутствии ожидаемого аннотированного поля."""
         request = self.context['request']
@@ -106,29 +107,18 @@ class RecipeSerializer(serializers.ModelSerializer):
             return obj.carts.filter(user=request.user).exists()
         return obj.is_in_shopping_cart
 
-    # Примечание. По поводу валидаций на минимальное значение для amount
-    # и cooking_time. Даже когда я их добавляю, сериализатор в первую очередь
-    # по умолчанию использует валидаторы на минимальное значение, указанные
-    # в модели. И не пройдя их, он даже не пытается провести валидацию в
-    # методах validate или validate_cooking_time.
-    #
-    # def validate_cooking_time(self, value):
-    #     print('Этот валидатор очень ленивый и совсем не хочет работать')
-    #     if value < settings.MIN_COOKING_TIME:
-    #         raise serializers.ValidationError('')
-    #
     def validate(self, attrs):
         ingredients = attrs.get('recipe_ingredients', False)
         if not ingredients:
             raise serializers.ValidationError(
-                self.ErrorMessage.EMPTY_INGREDIENTS_ERROR
+                ErrorMessage.EMPTY_INGREDIENTS_ERROR
             )
         ingredient_list = []
         for ingredient in ingredients:
             ingredient_list.append(ingredient.get('ingredient').get('id'))
         if len(ingredient_list) > len(set(ingredient_list)):
             raise serializers.ValidationError(
-                self.ErrorMessage.INGREDIENTS_REOCCURRENCE_ERROR
+                ErrorMessage.INGREDIENTS_REOCCURRENCE_ERROR
             )
         return attrs
 

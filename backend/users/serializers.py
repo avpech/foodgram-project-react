@@ -11,6 +11,11 @@ from users.models import Subscribe
 User = get_user_model()
 
 
+class ErrorMessage:
+    SUBSCRIPTION_EXISTS_ERROR = 'Подписка уже существует.'
+    SELF_FOLLOWING_ERROR = 'Пользователь не может подписаться на себя.'
+
+
 class CustomUserSerializer(UserSerializer):
     """Сериализатор для просмотра пользователей."""
     is_subscribed = serializers.SerializerMethodField()
@@ -24,7 +29,7 @@ class CustomUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context['request']
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated or request.user == obj:
             return False
         if not hasattr(obj, 'is_subscribed'):
             logging.warning(
@@ -76,10 +81,6 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'is_subscribed', 'recipes', 'recipes_count'
         )
 
-    class ErrorMessage:
-        SUBSCRIPTION_EXISTS_ERROR = 'Подписка уже существует.'
-        SELF_FOLLOWING_ERROR = 'Пользователь не может подписаться на себя.'
-
     def logger_warning(self, field):
         """Предупреждение об отсутствии ожидаемого аннотированного поля."""
         request = self.context['request']
@@ -122,11 +123,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
         author_id = int(self.context['view'].kwargs.get('id'))
         if Subscribe.objects.filter(user=user, author=author_id).exists():
             raise serializers.ValidationError(
-                self.ErrorMessage.SUBSCRIPTION_EXISTS_ERROR
+                ErrorMessage.SUBSCRIPTION_EXISTS_ERROR
             )
         if author_id == user.id:
             raise serializers.ValidationError(
-                self.ErrorMessage.SELF_FOLLOWING_ERROR
+                ErrorMessage.SELF_FOLLOWING_ERROR
             )
         return attrs
 

@@ -12,6 +12,10 @@ RUN pip3 install -r requirements.txt --no-cache-dir
 
 COPY . .
 
+RUN chmod +x ./entrypoint.sh
+
+RUN chmod +x ./start.sh
+
 ENTRYPOINT [ "./entrypoint.sh" ]
 
 CMD ["./start.sh"]

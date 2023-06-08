@@ -20,8 +20,8 @@ from users.serializers import CustomUserSerializer
 class ErrorMessage:
     EMPTY_INGREDIENTS_ERROR = 'Необходимо указать хотя бы один ингредиент'
     INGREDIENTS_REOCCURRENCE_ERROR = (
-        'Одинаковые ингредиенты с одинаковой '
-        'единицей измерения не должны повторяться'
+        {'ingrediens': [('Одинаковые ингредиенты с одинаковой '
+                         'единицей измерения не должны повторяться')]}
     )
 
 

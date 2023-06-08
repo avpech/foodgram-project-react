@@ -25,8 +25,7 @@ class CustomUserAdmin(UserAdmin):
     )
     add_form = CustomUserCreationForm
     search_fields = ('username', 'email')
-    list_filter = ('is_staff', 'is_superuser', 'is_active',
-                   'groups', 'username', 'email')
+    list_filter = ('is_staff', 'is_superuser', 'is_active')
     empty_value_display = '-пусто-'
     inlines = (SubscribeInLine,)
 

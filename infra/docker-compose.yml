@@ -4,12 +4,24 @@ services:
   db:
     image: postgres:13.0-alpine
     restart: always
-    ports:
-      - 5432:5432
     volumes:
       - db_value:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend-migrations:
+    image: artpech/foodgram
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    command: python manage.py migrate
 
   backend:
     image: artpech/foodgram
@@ -18,7 +30,10 @@ services:
       - static_value:/app/backend_static/
       - media_value:/app/media/
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      backend-migrations:
+        condition: service_started
     env_file:
       - ./.env
 

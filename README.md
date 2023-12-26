@@ -21,10 +21,10 @@
 DB_ENGINE=django.db.backends.postgresql
 DB_NAME=postgres
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=<ваш пароль>
+POSTGRES_PASSWORD=some_password
 DB_HOST=db
 DB_PORT=5432
-SECRET_KEY=<django_secret_key>
+SECRET_KEY=django_secret_key
 ```
 - Перейти в каталог infra_local.
 - Собрать контейнеры (в ОС должен быть установлен Docker)

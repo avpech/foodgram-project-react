@@ -24,7 +24,7 @@ services:
     command: python manage.py migrate
 
   backend:
-    build: ../backend
+    build: artpech/foodgram
     restart: always
     volumes:
       - static_value:/app/backend_static/

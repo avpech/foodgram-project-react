@@ -39,11 +39,13 @@ docker-compose up -d
 docker-compose exec backend python manage.py createsuperuser
 ```
 
-- Заполняем базу ингредиентами командой:
+- Заполнить базу ингредиентами командой:
 
 ```bash
 docker-compose exec backend python manage.py load_data
 ```
+
+- Добавить желаемые теги рецептов в админке [localhost/admin](http://localhost/admin)
 
 - Если есть необходимость, очистить базу от данных можно командой:
 

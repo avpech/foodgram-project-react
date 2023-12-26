@@ -15,7 +15,7 @@
 
 ### Запуск проекта
 - Клонировать репозиторий и перейти в него в командной строке.
-- Создать в каталоге infra файл .env в соответствии со следующим шаблоном:
+- Создать в каталоге infra_local файл .env в соответствии со следующим шаблоном:
 
 ```bash
 DB_ENGINE=django.db.backends.postgresql
@@ -24,8 +24,9 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=<ваш пароль>
 DB_HOST=db
 DB_PORT=5432
+SECRET_KEY=<django_secret_key>
 ```
-- Перейти в каталог infra.
+- Перейти в каталог infra_local.
 - Собрать контейнеры (в ОС должен быть установлен Docker)
 
 ```bash
@@ -38,7 +39,7 @@ docker-compose up
 docker-compose exec backend python manage.py createsuperuser
 ```
 
-- Если есть необходимость, заполняем базу ингредиентами командой:
+- Заполняем базу ингредиентами командой:
 
 ```bash
 docker-compose exec backend python manage.py load_data

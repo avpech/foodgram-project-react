@@ -148,3 +148,4 @@ static/
 backend/static/
 media/
 backend/media/
+infra_test/

@@ -32,6 +32,7 @@ SECRET_KEY=django_secret_key
 ```bash
 docker-compose up -d
 ```
+Внимание: при работе в ОС Windows убедитесь, что в файле backend/start.sh для окончания строки используется LF, а не CRLF.
 
 - Создать суперпользователя
 

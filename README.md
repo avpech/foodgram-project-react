@@ -30,7 +30,7 @@ SECRET_KEY=<django_secret_key>
 - Собрать контейнеры (в ОС должен быть установлен Docker)
 
 ```bash
-docker-compose up
+docker-compose up -d
 ```
 
 - Создать суперпользователя
